@@ -33,13 +33,6 @@ pub enum Domain {
 
 // type HashString = HashMap<String, String>;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum HashOrString {
-    // HashString,
-    HashMap(String, String),
-    String
-}
-
 /// TODO
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Context {
