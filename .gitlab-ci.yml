@@ -1,10 +1,20 @@
 image: rust:latest
 
+variables:
+  CRATE_NAME: "eddeserus"
+
+
 stages:
   - test
+  - site
 
 test:
   stage: test
   script:
     - cargo test
 
+site:
+  stage: site
+  script:
+    - cargo rustdoc
+    - aws s3 sync $CI_PROJECT_DIR/target/doc/$CRATE_NAME/ s3://docs.novisci.com/$CRATE_NAME/ --delete --acl public-read
