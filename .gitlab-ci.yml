@@ -16,5 +16,4 @@ site:
   stage: site
   script:
     - cargo rustdoc
-    - sleep 5
-    - aws s3 sync $CI_PROJECT_DIR/target/doc/ s3://docs.novisci.com/$CRATE_NAME/ --exclude .lock --delete --acl public-read
+    - aws s3 sync $CI_PROJECT_DIR/target/doc/ s3://docs.novisci.com/cargo/ --exclude .lock --delete --acl public-read
