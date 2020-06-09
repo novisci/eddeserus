@@ -1,0 +1,19 @@
+image: registry.novisci.com/nsstat/statocker/rust:latest
+
+variables:
+  CRATE_NAME: "eddeserus"
+
+stages:
+  - test
+  - site
+
+test:
+  stage: test
+  script:
+    - cargo test
+
+site:
+  stage: site
+  script:
+    - cargo rustdoc
+    - aws s3 sync $CI_PROJECT_DIR/target/doc/ s3://docs.novisci.com/cargo/ --exclude .lock --delete --acl public-read
