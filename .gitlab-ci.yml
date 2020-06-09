@@ -1,8 +1,7 @@
-image: rust:latest
+image: registry.novisci.com/nsstat/statocker/rust:latest
 
 variables:
   CRATE_NAME: "eddeserus"
-
 
 stages:
   - test
