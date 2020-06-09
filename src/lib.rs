@@ -13,8 +13,8 @@ pub mod se {
     use crate::types::Event;
 
     /// TODO
-    pub fn serialize_event(x: &Event) -> String {
-        serde_json::to_string(x).unwrap()
+    pub fn serialize_event(x: &Event) -> serde_json::Result<String> {
+        serde_json::to_string(x)
     }
 }
 

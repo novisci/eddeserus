@@ -1,9 +1,10 @@
 
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
+use serde_tuple::*;
 
 /// The `Event` type. See []().
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize_tuple, Deserialize, Debug)]
 pub struct Event {
     pub pid:      String,
     pub start:    Option<String>,
