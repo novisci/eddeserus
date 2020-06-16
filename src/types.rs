@@ -6,12 +6,13 @@ use serde_tuple::*;
 use serde::de::{self, Deserializer};
 
 /*----------------------------------------------------------------------------*/
-/// The [`Event`](https://docs.novisci.com/schema/event-data-model/1.0/#event-schema) type.
+/// The [`Event`](https://docs.novisci.com/schema/event-data-model/1.0/#event-schema)
+/// type.
 
 #[derive(Serialize_tuple, Debug)]
 pub struct Event  {
     pub pid:      String,
-    pub start:    String, 
+    pub begin:    String, 
     pub end:      Option<String>,
     pub domain:   String,
     pub concepts: Vec<String>,
@@ -27,7 +28,7 @@ impl<'de> Deserialize<'de> for Event {
         #[derive(Deserialize, Debug)]
         struct EventHolder {
             pid :     String,
-            start:    String, 
+            begin:    String, 
             end:      Option<String>,
             domain:   String,
             concepts: Vec<String>,
@@ -69,7 +70,7 @@ impl<'de> Deserialize<'de> for Event {
 
         Ok(Event {
             pid      : m.pid,
-            start    : m.start,
+            begin    : m.begin,
             end      : m.end,
             domain   : m.domain,
             concepts : m.concepts,
@@ -202,8 +203,8 @@ pub struct Fill {
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Time {
-    TimeValueInt    {begin: u64, end: Option<u64>},
-    TimeValueString {begin: String, end: Option<String>},
+    TimeValueInt    { begin: u64,    end: Option<u64> },
+    TimeValueString { begin: String, end: Option<String> },
 }
 
 #[cfg(test)]
