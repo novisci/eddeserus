@@ -202,8 +202,8 @@ pub struct Fill {
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Time {
-    DateValueInt    {begin: u64, end: Option<u64>},
-    DateValueString {begin: String, end: Option<String>},
+    TimeValueInt    {begin: u64, end: Option<u64>},
+    TimeValueString {begin: String, end: Option<String>},
 }
 
 #[cfg(test)]
