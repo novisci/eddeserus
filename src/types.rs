@@ -11,7 +11,7 @@ use serde::de::{self, Deserializer};
 #[derive(Serialize_tuple, Debug)]
 pub struct Event  {
     pub pid:      String,
-    pub start:    Option<String>, 
+    pub start:    String, 
     pub end:      Option<String>,
     pub domain:   String,
     pub concepts: Vec<String>,
@@ -27,7 +27,7 @@ impl<'de> Deserialize<'de> for Event {
         #[derive(Deserialize, Debug)]
         struct EventHolder {
             pid :     String,
-            start:    Option<String>, 
+            start:    String, 
             end:      Option<String>,
             domain:   String,
             concepts: Vec<String>,
