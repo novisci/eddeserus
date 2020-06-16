@@ -182,6 +182,19 @@ pub struct Cost {
 }
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
+pub struct Fill {
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub days_supply: Option<i32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub quantity: Option<i32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub strength:  Option<String>,
+}
+
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Time {
     DateValueInt    {begin: u64, end: Option<u64>},
@@ -476,7 +489,7 @@ pub struct LabsFacts {
     pub value   : LabValue,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    location: Option<Location>,
+    pub location: Option<Location>,
 }
 
 #[cfg(test)]
@@ -522,7 +535,13 @@ pub struct MedicationFacts {
     pub code    : Code,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub fill: Option<Fill>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Location>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim : Option<Claim>,
 }
 
 #[cfg(test)]
