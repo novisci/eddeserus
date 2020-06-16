@@ -1,11 +1,12 @@
 //! eddeserus
 //!
 //! `eddeserus` is an Event Data DE/SErialization library written in Rust. 
-//! For information about  NoviSci's event data model see 
-//! [EDM](https://docs.novisci.com/schema/event-data-model/0.1/) schema.
+//! For information about NoviSci's event data model see 
+//! [EDM](https://docs.novisci.com/schema/event-data-model/1.0/) schema.
 //!
 //! Currently, `eddeserus` can de/serialize JSON formatted events. 
-//
+
+// 
 #![doc(html_root_url = "https://docs.novisci.com/eddeserus/")]
 #![doc(issue_tracker_base_url = "https://gitlab.novisci.com/nsStat/eddeserus/issues")]
 //
@@ -13,31 +14,50 @@
 /// Rust types corresponding to events and elements thereof.
 pub mod types;
 
-/// Provides functions for deserialization from JSON to an `Event` and 
-/// serialization from an `Event` to JSON.
+// Provides functions for deserialization from JSON to an `Event` and 
+// serialization from an `Event` to JSON.
 pub mod sede{
-    use crate::types::Event;
+    use crate::types::{Event};
     use serde_json::Result;
 
-    /// Deserialize a string reference to a `serde_json::Result<Event>`
+    /// Deserialize a string reference to a `serde_json::Result<Event>`.
     /// 
     /// Example:
     /// ```
     /// use eddeserus::sede::*;
-    /// let json = r#"["A", "2010-01-01", null, "Enrollment", [], {"facts":{}, "source":null}]"#;
+    /// let json = "\
+    ///     [\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
+    ///      {\"domain\":\"Claim\",\
+    ///         \"patient_id\":\"xyz\",\
+    ///         \"time\":{\"begin\":0,\"end\":1},\
+    ///         \"facts\":{\
+    ///             \"claim\":{\"id\":\"claim1\"}\
+    ///          }\
+    ///      }\
+    ///     ]";
     /// println!("{:?}", deserialize_event(&json.to_string()));
     /// ```
     ///
-    pub fn deserialize_event(x: &std::string::String) -> Result<Event> {
+    pub fn deserialize_event(x: &std::string::String) -> Result<Event> 
+    {
         serde_json::from_str(&x)
     }
 
-    /// Serialize an `Event` to a `serde_json::Result<String>`
+    /// Serialize an `Event` to a `serde_json::Result<String>`.
     /// 
     /// Example:
     /// ```
     /// use eddeserus::sede::*;
-    /// let json = r#"["A","2010-01-01",null,"Enrollment",[],{"facts":{},"source":{"table":"a"}}]"#;
+    /// let json = "\
+    ///     [\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
+    ///      {\"domain\":\"Claim\",\
+    ///         \"patient_id\":\"xyz\",\
+    ///         \"time\":{\"begin\":0,\"end\":1},\
+    ///         \"facts\":{\
+    ///             \"claim\":{\"id\":\"claim1\"}\
+    ///          }\
+    ///      }\
+    ///     ]";
     /// let event = deserialize_event(&json.to_string()).unwrap();
     /// assert_eq!(json, serialize_event(&event).unwrap());
     /// ```
@@ -48,6 +68,12 @@ pub mod sede{
 }
 
 /// Provides functions for processing events (`&str` -> process -> `io::stdput`).
+/// 
+/// APIs in this module are subject to change. Specifically, future versions 
+/// may have a type signature such as `InHandler -> Processor -> OutHandler`. 
+/// In this way, users could specify how to handle IO; instead of the current
+/// situation, where the user had to handle inputs to get a `&str` and has no
+/// choice in output.  
 pub mod process{
     use crate::sede::serialize_event;
     use serde_json::{Deserializer};
@@ -80,4 +106,3 @@ pub mod process{
 
     }
 }
-
