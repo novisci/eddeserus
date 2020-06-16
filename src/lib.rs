@@ -20,17 +20,21 @@ pub mod sede{
     use crate::types::{Event};
     use serde_json::Result;
 
-    /// Deserialize a string reference to a `serde_json::Result<Event>`
+    /// Deserialize a string reference to a `serde_json::Result<Event>`.
     /// 
     /// Example:
     /// ```
     /// use eddeserus::sede::*;
-    /// let json = "[\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
-    ///              {\"domain\":\"Claim\",\
-    ///               \"patient_id\":\"xyz\",\
-    ///               \"time\":{\"begin\":0,\"end\":1},\
-    ///               \"facts\":{\"id\":\"abc\"}\
-    ///            }]";
+    /// let json = "\
+    ///     [\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
+    ///      {\"domain\":\"Claim\",\
+    ///         \"patient_id\":\"xyz\",\
+    ///         \"time\":{\"begin\":0,\"end\":1},\
+    ///         \"facts\":{\
+    ///             \"claim\":{\"id\":\"claim1\"}\
+    ///          }\
+    ///      }\
+    ///     ]";
     /// println!("{:?}", deserialize_event(&json.to_string()));
     /// ```
     ///
@@ -39,17 +43,21 @@ pub mod sede{
         serde_json::from_str(&x)
     }
 
-    /// Serialize an `Event` to a `serde_json::Result<String>`
+    /// Serialize an `Event` to a `serde_json::Result<String>`.
     /// 
     /// Example:
     /// ```
     /// use eddeserus::sede::*;
-    /// let json = "[\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
-    ///              {\"domain\":\"Claim\",\
-    ///               \"patient_id\":\"xyz\",\
-    ///               \"time\":{\"begin\":0,\"end\":1},\
-    ///               \"facts\":{\"id\":\"abc\"}\
-    ///            }]";
+    /// let json = "\
+    ///     [\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
+    ///      {\"domain\":\"Claim\",\
+    ///         \"patient_id\":\"xyz\",\
+    ///         \"time\":{\"begin\":0,\"end\":1},\
+    ///         \"facts\":{\
+    ///             \"claim\":{\"id\":\"claim1\"}\
+    ///          }\
+    ///      }\
+    ///     ]";
     /// let event = deserialize_event(&json.to_string()).unwrap();
     /// assert_eq!(json, serialize_event(&event).unwrap());
     /// ```
@@ -60,6 +68,12 @@ pub mod sede{
 }
 
 /// Provides functions for processing events (`&str` -> process -> `io::stdput`).
+/// 
+/// APIs in this module are subject to change. Specifically, future versions 
+/// may have a type signature such as `InHandler -> Processor -> OutHandler`. 
+/// In this way, users could specify how to handle IO; instead of the current
+/// situation, where the user had to handle inputs to get a `&str` and has no
+/// choice in output.  
 pub mod process{
     use crate::sede::serialize_event;
     use serde_json::{Deserializer};
