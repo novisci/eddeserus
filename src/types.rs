@@ -51,6 +51,9 @@ impl<'de> Deserialize<'de> for Event {
             Domain::Diagnosis => 
             Context::Diagnosis(from_value::<ContextDiagnosis>(x).unwrap()),
 
+            Domain::Eligibility => 
+            Context::Eligibility(from_value::<ContextEligibilty>(x).unwrap()),
+
             Domain::Enrollment => 
             Context::Enrollment(from_value::<ContextEnrollment>(x).unwrap()),
 
@@ -105,6 +108,7 @@ pub enum Domain {
     Claim,
     Demographics,
     Diagnosis,
+    Eligibility,
     Enrollment,
     Labs,
     Medication,
@@ -120,6 +124,7 @@ pub enum Context {
     Claim(ContextClaim),
     Demographics(ContextDemographics),
     Diagnosis(ContextDiagnosis),
+    Eligibility(ContextEligibilty),
     Enrollment(ContextEnrollment),
     Labs(ContextLabs),
     Medication(ContextMedication),
@@ -268,7 +273,6 @@ pub struct ClaimFacts {
 }
 
 
-
 #[cfg(test)]
 mod test_claim_context {
     use serde_json::{from_str, to_string, Result};
@@ -392,6 +396,9 @@ pub struct DiagnosisFacts {
     pub code    : Code,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim   : Option<Claim>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Location>,
 }
 
@@ -415,6 +422,46 @@ mod test_diagnosis_context {
         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
     }
 }
+
+/*----------------------------------------------------------------------------*/
+/// Eligibility
+///
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
+pub struct ContextEligibilty {
+
+    pub patient_id : SubjectId,
+    pub time :  Time,
+    pub facts:  EligibilityFacts,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<Source>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub misc: Option<serde_json::Value>,
+}
+
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
+pub struct EligibilityFacts {}
+
+#[cfg(test)]
+mod test_eligibility_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::types::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"domain\":\"Eligibility\",\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"facts\":{}\
+            }";
+        let ctxt : Result<Context> = from_str(&json.to_string());
+        println!("{:?}", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
 /*----------------------------------------------------------------------------*/
 /// Enrollment
 ///
@@ -487,6 +534,9 @@ pub struct LabValue {
 pub struct LabsFacts {
     pub code    : Code,
     pub value   : LabValue,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim   : Option<Claim>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Location>,
@@ -584,6 +634,9 @@ pub struct ContextProcedure {
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ProcedureFacts {
     pub code    : Code,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim   : Option<Claim>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Location>,
