@@ -7,7 +7,7 @@
 //! Currently, `eddeserus` can de/serialize JSON formatted events. 
 
 // 
-#![doc(html_root_url = "https://docs.novisci.com/eddeserus/")]
+//#![doc(html_root_url = "https://docs.novisci.com/eddeserus/")]
 #![doc(issue_tracker_base_url = "https://gitlab.novisci.com/nsStat/eddeserus/issues")]
 //
 
