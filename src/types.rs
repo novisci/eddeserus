@@ -11,9 +11,9 @@ use serde::de::{self, Deserializer};
 
 #[derive(Serialize_tuple, Debug)]
 pub struct Event  {
-    pub pid:      String,
-    pub begin:    String, 
-    pub end:      Option<String>,
+    pub pid:      SubjectId,
+    pub begin:    TimeValue, 
+    pub end:      Option<TimeValue>,
     pub domain:   String,
     pub concepts: Vec<String>,
     pub context:  Context
@@ -27,9 +27,9 @@ impl<'de> Deserialize<'de> for Event {
 
         #[derive(Deserialize, Debug)]
         struct EventHolder {
-            pid :     String,
-            begin:    String, 
-            end:      Option<String>,
+            pid :     SubjectId,
+            begin:    TimeValue, 
+            end:      Option<TimeValue>,
             domain:   String,
             concepts: Vec<String>,
             ctxt:     Value,
@@ -202,9 +202,18 @@ pub struct Fill {
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-pub enum Time {
-    TimeValueInt    { begin: u64,    end: Option<u64> },
-    TimeValueString { begin: String, end: Option<String> },
+pub enum TimeValue {
+    TimeValueInt(u64),
+    TimeValueString(String),
+}
+
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
+// #[serde(untagged)]
+pub struct Time {
+    begin : TimeValue,
+    end   : Option<TimeValue>,
+    // TimeInt    { begin: TimeValue::TimeValueInt, end: Option<TimeValue::TimeValueInt> },
+    // TimeString { begin: TimeValue::TimeValueString, end: Option<TimeValue::TimeValueString> },
 }
 
 #[cfg(test)]
