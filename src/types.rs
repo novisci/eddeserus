@@ -1,4 +1,4 @@
-//! Internal representations of NoviSci EDM data types
+//! The Rust internal representations of NoviSci EDM data types.
 
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
@@ -6,14 +6,13 @@ use serde_tuple::*;
 use serde::de::{self, Deserializer};
 
 /*----------------------------------------------------------------------------*/
-/// The [`Event`](https://docs.novisci.com/schema/event-data-model/1.0/#event-schema)
-/// type.
+// [`Event`](https://docs.novisci.com/schema/event-data-model/1.0/#event-schema)
 
 #[derive(Serialize_tuple, Debug)]
 pub struct Event  {
-    pub pid:      String,
-    pub begin:    String, 
-    pub end:      Option<String>,
+    pub pid:      SubjectId,
+    pub begin:    TimeValue, 
+    pub end:      Option<TimeValue>,
     pub domain:   String,
     pub concepts: Vec<String>,
     pub context:  Context
@@ -27,9 +26,9 @@ impl<'de> Deserialize<'de> for Event {
 
         #[derive(Deserialize, Debug)]
         struct EventHolder {
-            pid :     String,
-            begin:    String, 
-            end:      Option<String>,
+            pid :     SubjectId,
+            begin:    TimeValue, 
+            end:      Option<TimeValue>,
             domain:   String,
             concepts: Vec<String>,
             ctxt:     Value,
@@ -103,6 +102,8 @@ mod test_event_context {
     }
 }
 
+/*----------------------------------------------------------------------------*/
+// Domains
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "domain")]
 pub enum Domain {
@@ -117,8 +118,7 @@ pub enum Domain {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Contexts
-
+// Contexts
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "domain")]
 pub enum Context {
@@ -133,7 +133,7 @@ pub enum Context {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Common types used in multiple domains and contexts
+// Common types used in multiple domains and contexts
 
 type Source = Option<HashMap<String, String>>;
 
@@ -155,7 +155,7 @@ pub struct Code {
 type Codebook = String;
 
 /*----------------------------------------------------------------------------*/
-/// Fact Types
+// Fact Types
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 #[serde(untagged)]
@@ -202,9 +202,15 @@ pub struct Fill {
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-pub enum Time {
-    TimeValueInt    { begin: u64,    end: Option<u64> },
-    TimeValueString { begin: String, end: Option<String> },
+pub enum TimeValue {
+    TimeValueInt(u64),
+    TimeValueString(String),
+}
+
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
+pub struct Time {
+    begin : TimeValue,
+    end   : Option<TimeValue>,
 }
 
 #[cfg(test)]
@@ -238,13 +244,8 @@ mod test_time {
     }
 }
 
-/***********
- Domains 
-***********/
-
 /*----------------------------------------------------------------------------*/
-/// Claim
-///
+// Claim
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextClaim {
@@ -273,7 +274,6 @@ pub struct ClaimFacts {
 
 }
 
-
 #[cfg(test)]
 mod test_claim_context {
     use serde_json::{from_str, to_string, Result};
@@ -294,8 +294,7 @@ mod test_claim_context {
     }
 }
 /*----------------------------------------------------------------------------*/
-/// Demographics
-///
+// Demographics
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextDemographics {
@@ -374,8 +373,7 @@ mod test_demographic_context {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Diagnosis
-///
+// Diagnosis
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextDiagnosis {
@@ -425,8 +423,8 @@ mod test_diagnosis_context {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Eligibility
-///
+// Eligibility
+
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextEligibilty {
 
@@ -464,8 +462,8 @@ mod test_eligibility_context {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Enrollment
-///
+// Enrollment
+
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextEnrollment {
 
@@ -503,8 +501,8 @@ mod test_enrollment_context {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Labs
-///
+// Labs
+
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextLabs {
 
@@ -564,8 +562,8 @@ mod test_labs_context {
 }
 
 /*----------------------------------------------------------------------------*/
-/// Medication
-///
+// Medication
+
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextMedication {
 
@@ -615,7 +613,7 @@ mod test_medication_context {
     }
 }
 /*----------------------------------------------------------------------------*/
-/// Procedure
+// Procedure
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextProcedure {
