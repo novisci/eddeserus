@@ -11,12 +11,13 @@
 #![doc(issue_tracker_base_url = "https://gitlab.novisci.com/nsStat/eddeserus/issues")]
 //
 
-/// Rust types corresponding to events and elements thereof.
+// Rust types corresponding to events and elements thereof.
 pub mod types;
 
-// Provides functions for deserialization from JSON to an `Event` and 
-// serialization from an `Event` to JSON.
 pub mod sede{
+    //! Provides functions for deserialization from JSON to an `Event` and 
+    //! serialization from an `Event` to JSON.
+
     use crate::types::{Event};
     use serde_json::Result;
 
