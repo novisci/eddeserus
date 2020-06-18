@@ -1,6 +1,6 @@
 [package]
 name = "eddeserus"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Bradley Saul <bsaul@novisci.com>"]
 edition = "2018"
 

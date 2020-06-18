@@ -43,28 +43,44 @@ impl<'de> Deserialize<'de> for Event {
         let context = 
         match d {
             Domain::Claim => 
-            Context::Claim(from_value::<ContextClaim>(x).unwrap()),
+            Context::Claim(
+                from_value::<ContextClaim>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Demographics => 
-            Context::Demographics(from_value::<ContextDemographics>(x).unwrap()),
+            Context::Demographics(
+                from_value::<ContextDemographics>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Diagnosis => 
-            Context::Diagnosis(from_value::<ContextDiagnosis>(x).unwrap()),
+            Context::Diagnosis(
+                from_value::<ContextDiagnosis>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Eligibility => 
-            Context::Eligibility(from_value::<ContextEligibilty>(x).unwrap()),
+            Context::Eligibility(
+                from_value::<ContextEligibilty>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Enrollment => 
-            Context::Enrollment(from_value::<ContextEnrollment>(x).unwrap()),
+            Context::Enrollment(
+                from_value::<ContextEnrollment>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Labs => 
-            Context::Labs(from_value::<ContextLabs>(x).unwrap()),
+            Context::Labs(
+                from_value::<ContextLabs>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Medication => 
-            Context::Medication(from_value::<ContextMedication>(x).unwrap()),
+            Context::Medication(
+                from_value::<ContextMedication>(x).map_err(de::Error::custom)?
+            ),
 
             Domain::Procedure => 
-            Context::Procedure(from_value::<ContextProcedure>(x).unwrap()),
+            Context::Procedure(
+                from_value::<ContextProcedure>(x).map_err(de::Error::custom)?
+            ),
         };
 
         Ok(Event {
