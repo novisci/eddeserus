@@ -19,7 +19,7 @@ pub mod sede{
     //! serialization from an `Event` to JSON.
 
     use crate::types::{Event};
-    use serde_json::Result;
+    use serde_json::{Result};
 
     /// Deserialize a string reference to a `serde_json::Result<Event>`.
     /// 
@@ -88,22 +88,27 @@ pub mod process{
     /// to `stdout` and unsucessful events to `stderr`.
     pub fn process_events(events_json: &str, 
                           processor: &mut dyn std::ops::Fn(Event) -> Event) 
-                          -> () {
+                          -> io::Result<()> {
         
         let stream = Deserializer::from_str(&events_json).into_iter::<Event>();
         let stdout = io::stdout(); 
-        let mut handle    = io::BufWriter::new(stdout.lock()); 
+        let mut outhandle = io::BufWriter::new(stdout.lock()); 
         let mut errhandle = io::BufWriter::new(io::stderr()); 
 
         for event in stream {
-            let p = serialize_event(&processor(event.unwrap()));
+
+
+            let p = serialize_event(&processor(event?));
 
             match p {
-                Ok(v) =>  writeln!(handle, "{}", v).ok(), 
+                Ok(v) =>  writeln!(outhandle, "{}", v).ok(), 
                 // (.ok() added to hide warning: unused std::result:Result)
                 Err(e) => writeln!(errhandle, "{}", e).ok(),
             };        
         }
 
+        Ok(())
+
     }
 }
+
