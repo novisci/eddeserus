@@ -210,6 +210,8 @@ pub enum TimeValue {
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Time {
     begin : TimeValue,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     end   : Option<TimeValue>,
 }
 
@@ -229,7 +231,7 @@ mod test_time {
 
     #[test]
     fn test2() { 
-        let json = r#"{"begin":0,"end":null}"#;
+        let json = r#"{"begin":0}"#;
         let ctxt : Result<Time> = from_str(&json.to_string());
         println!("The time is: {:?}", &ctxt);
         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
@@ -237,7 +239,7 @@ mod test_time {
 
     #[test]
     fn test3() { 
-        let json = r#"{"begin":"2010-01-01","end":null}"#;
+        let json = r#"{"begin":"2010-01-01"}"#;
         let ctxt : Result<Time> = from_str(&json.to_string());
         println!("The time is: {:?}", &ctxt);
         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
