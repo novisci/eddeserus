@@ -97,7 +97,6 @@ pub mod process{
 
         for event in stream {
 
-
             let p = serialize_event(&processor(event?));
 
             match p {
