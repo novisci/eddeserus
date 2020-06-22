@@ -225,10 +225,10 @@ pub enum TimeValue {
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Time {
-    begin : TimeValue,
+    pub begin : TimeValue,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    end   : Option<TimeValue>,
+    pub end   : Option<TimeValue>,
 }
 
 #[cfg(test)]
