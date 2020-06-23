@@ -1,21 +1,31 @@
 //! The Rust internal representations of NoviSci EDM data types.
 
-use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use serde_tuple::*;
 use serde::de::{self, Deserializer};
-
+use std::fmt;
 /*----------------------------------------------------------------------------*/
 // [`Event`](https://docs.novisci.com/schema/event-data-model/1.0/#event-schema)
 
 #[derive(Serialize_tuple, Debug)]
 pub struct Event  {
-    pub pid:      SubjectId,
-    pub begin:    TimeValue, 
-    pub end:      Option<TimeValue>,
-    pub domain:   String,
+    pub pid: serde_json::Value,
+    pub begin: serde_json::Value,
+    pub end: serde_json::Value,
+    pub domain: serde_json::Value,
+    // pub pid:      SubjectId,
+    // pub begin:    TimeValue, 
+    // pub end:      Option<TimeValue>,
+    // pub domain:   String,
     pub concepts: Vec<String>,
     pub context:  Context
+}
+
+impl fmt::Display for Event {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "(a {} event)", self.domain)
+    }
+
 }
 
 impl<'de> Deserialize<'de> for Event {
@@ -26,10 +36,14 @@ impl<'de> Deserialize<'de> for Event {
 
         #[derive(Deserialize, Debug)]
         struct EventHolder {
-            pid :     SubjectId,
-            begin:    TimeValue, 
-            end:      Option<TimeValue>,
-            domain:   String,
+            pid: serde_json::Value,
+            begin: serde_json::Value,
+            end: serde_json::Value,
+            domain: serde_json::Value,
+            // pid :     SubjectId,
+            // begin:    TimeValue, 
+            // end:      Option<TimeValue>,
+            // domain:   String,
             concepts: Vec<String>,
             ctxt:     Value,
         }
@@ -151,7 +165,9 @@ pub enum Context {
 /*----------------------------------------------------------------------------*/
 // Common types used in multiple domains and contexts
 
-type Source = Option<HashMap<String, String>>;
+// type Source = Option<HashMap<String, String>>;
+type Source = Option<serde_json::Value>;
+type Misc = Option<serde_json::Value>;
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub enum Location {
@@ -172,13 +188,14 @@ type Codebook = String;
 
 /*----------------------------------------------------------------------------*/
 // Fact Types
+type SubjectId = serde_json::Value;
 
-#[derive(PartialEq, Serialize, Deserialize, Debug)]
-#[serde(untagged)]
-pub enum SubjectId {
-    PidInt(u64),
-    IDString(String),
-}
+// #[derive(PartialEq, Serialize, Deserialize, Debug)]
+// #[serde(untagged)]
+// pub enum SubjectId {
+//     PidInt(u64),
+//     IDString(String),
+// }
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Claim {
@@ -216,51 +233,52 @@ pub struct Fill {
     pub strength:  Option<String>,
 }
 
-#[derive(PartialEq, Serialize, Deserialize, Debug)]
-#[serde(untagged)]
-pub enum TimeValue {
-    TimeValueInt(u64),
-    TimeValueString(String),
-}
 
-#[derive(PartialEq, Serialize, Deserialize, Debug)]
-pub struct Time {
-    pub begin : TimeValue,
+type Time = serde_json::Value;
+// #[derive(PartialEq, Serialize, Deserialize, Debug)]
+// #[serde(untagged)]
+// pub enum TimeValue {
+//     TimeValueInt(u64),
+//     TimeValueString(String),
+// }
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub end   : Option<TimeValue>,
-}
+// #[derive(PartialEq, Serialize, Deserialize, Debug)]
+// pub struct Time {
+//     pub begin : TimeValue,
 
-#[cfg(test)]
-mod test_time {
-    use serde_json::{from_str, to_string, Result};
-    use crate::types::Time;
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub end   : Option<TimeValue>,
+// }
+// #[cfg(test)]
+// mod test_time {
+//     use serde_json::{from_str, to_string, Result};
+//     use crate::types::Time;
 
-    #[test]
-    fn test1() {
-        use serde_json::{from_str, to_string, Result};
-        let json = r#"{"begin":0,"end":10}"#;
-        let ctxt : Result<Time> = from_str(&json.to_string());
-        println!("The time is: {:?}", &ctxt);
-        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
-    }
+//     #[test]
+//     fn test1() {
+//         use serde_json::{from_str, to_string, Result};
+//         let json = r#"{"begin":0,"end":10}"#;
+//         let ctxt : Result<Time> = from_str(&json.to_string());
+//         println!("The time is: {:?}", &ctxt);
+//         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+//     }
 
-    #[test]
-    fn test2() { 
-        let json = r#"{"begin":0}"#;
-        let ctxt : Result<Time> = from_str(&json.to_string());
-        println!("The time is: {:?}", &ctxt);
-        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
-    }
+//     #[test]
+//     fn test2() { 
+//         let json = r#"{"begin":0}"#;
+//         let ctxt : Result<Time> = from_str(&json.to_string());
+//         println!("The time is: {:?}", &ctxt);
+//         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+//     }
 
-    #[test]
-    fn test3() { 
-        let json = r#"{"begin":"2010-01-01"}"#;
-        let ctxt : Result<Time> = from_str(&json.to_string());
-        println!("The time is: {:?}", &ctxt);
-        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
-    }
-}
+//     #[test]
+//     fn test3() { 
+//         let json = r#"{"begin":"2010-01-01"}"#;
+//         let ctxt : Result<Time> = from_str(&json.to_string());
+//         println!("The time is: {:?}", &ctxt);
+//         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+//     }
+// }
 
 /*----------------------------------------------------------------------------*/
 // Claim
@@ -396,24 +414,28 @@ mod test_demographic_context {
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct ContextDiagnosis {
 
-    pub patient_id : SubjectId, 
-    pub time :  Time,
+    // pub patient_id : SubjectId, 
+    pub patient_id : serde_json::Value,
+    pub time : serde_json::Value,
+    // pub time :  Time,
     pub facts: DiagnosisFacts,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<Source>,
+    pub source: Source,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub misc: Option<serde_json::Value>,
+    pub misc: Misc,
 }
 
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct DiagnosisFacts {
     pub code    : Code,
+    // pub code   : serde_json::Value,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub claim   : Option<Claim>,
+    // pub claim   : Option<Claim>,
+    pub claim   : Option<serde_json::Value>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Location>,
