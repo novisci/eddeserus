@@ -66,6 +66,7 @@ pub mod sede{
     pub fn serialize_event(x: &Event) -> Result<String> {
         serde_json::to_string(x)
     }
+
 }
 
 /// Provides functions for processing events (`&str` -> process -> `io::stdput`).

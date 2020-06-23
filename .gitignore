@@ -2,3 +2,4 @@
 Cargo.lock
 *sublime-*
 *DS_Store
+callgrind*
