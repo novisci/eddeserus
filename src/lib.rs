@@ -14,6 +14,8 @@
 // Rust types corresponding to events and elements thereof.
 pub mod types;
 
+pub mod experiment;
+
 pub mod sede{
     //! Provides functions for deserialization from JSON to an `Event` and 
     //! serialization from an `Event` to JSON.
