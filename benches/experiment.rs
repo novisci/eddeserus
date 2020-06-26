@@ -1,9 +1,17 @@
 
-use eddeserus::types::*;
+use eddeserus::experiment::*;
 use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
 
+fn deserialize_orig(x: &String) -> () {
+    let stream = serde_json::Deserializer::from_str(&x)
+                 .into_iter::<eddeserus::types::Event>();
 
-fn deserialize(x: &String) -> () {
+    for event in stream {
+        event.unwrap();
+    }
+}
+
+fn deserialize_new(x: &String) -> () {
     let stream = serde_json::Deserializer::from_str(&x)
                  .into_iter::<Event>();
 
@@ -21,9 +29,9 @@ fn replicate_event(x: &String, n: u32) -> String {
 }
 
 
-fn deserialize_demographics(c: &mut Criterion) {
+fn deserialize_demographic_experiments(c: &mut Criterion) {
 
-    let mut group = c.benchmark_group("demographics");
+    let mut group = c.benchmark_group("demographics_experiments");
 
     let val = "[\
     \"xyz\",2,null,\"Demographics\",[],\
@@ -41,19 +49,23 @@ fn deserialize_demographics(c: &mut Criterion) {
 
         // Demographics
         group.bench_with_input(
-            BenchmarkId::new("de", format!("{} demographics", &n)),
+            BenchmarkId::new("orig", format!("{} demographics", &n)),
              &json,
-            |b, j| b.iter(|| deserialize(j) ));
+            |b, j| b.iter(|| deserialize_orig(j) ));
 
+        group.bench_with_input(
+            BenchmarkId::new("new", format!("{} demographics", &n)),
+             &json,
+            |b, j| b.iter(|| deserialize_new(j) ));
 
     }
 
 }
 
 
-fn deserialize_diagnosis(c: &mut Criterion) {
+fn deserialize_diagnosis_experiments(c: &mut Criterion) {
 
-    let mut group = c.benchmark_group("diagnosis");
+    let mut group = c.benchmark_group("diagnosis_experiments");
 
     let val = "[\
     \"abc\",2,null,\"Diagnosis\",[],\
@@ -74,18 +86,23 @@ fn deserialize_diagnosis(c: &mut Criterion) {
         let json = replicate_event(&val, *n);
         // Diagnosis
         group.bench_with_input(
-            BenchmarkId::new("de", format!("{} diagnosis", &n)),
+            BenchmarkId::new("orig", format!("{} diagnosis", &n)),
              &json, 
-             |b, j| b.iter(|| deserialize(j) ));
+             |b, j| b.iter(|| deserialize_orig(j) ));
+
+        group.bench_with_input(
+            BenchmarkId::new("new", format!("{} diagnosis", &n)),
+             &json, 
+            |b, j| b.iter(|| deserialize_new(j) ));
 
     }
 }
 
 
 
-fn deserialize_procedure(c: &mut Criterion) {
+fn deserialize_procedure_experiments(c: &mut Criterion) {
 
-    let mut group = c.benchmark_group("procedure");
+    let mut group = c.benchmark_group("procedure_experiments");
 
     let val = "[\
     \"abc\",2,null,\"Procedure\",[],\
@@ -103,16 +120,22 @@ fn deserialize_procedure(c: &mut Criterion) {
 
         // Procedure
         group.bench_with_input(
-            BenchmarkId::new("de", format!("{} procedure", &n)),
+            BenchmarkId::new("orig", format!("{} procedure", &n)),
              &json, 
-            |b, j| b.iter(|| deserialize(j) ));
+            |b, j| b.iter(|| deserialize_orig(j) ));
+
+
+        group.bench_with_input(
+            BenchmarkId::new("new", format!("{} procedure", &n)),
+             &json, 
+            |b, j| b.iter(|| deserialize_new(j) ));
 
     }
 }
 
 
 criterion_group!(benches, 
-    deserialize_demographics, 
-    deserialize_diagnosis,
-    deserialize_procedure);
+    deserialize_demographic_experiments, 
+    deserialize_diagnosis_experiments,
+    deserialize_procedure_experiments);
 criterion_main!(benches);

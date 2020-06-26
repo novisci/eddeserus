@@ -14,6 +14,7 @@
 // Rust types corresponding to events and elements thereof.
 pub mod types;
 
+
 pub mod sede{
     //! Provides functions for deserialization from JSON to an `Event` and 
     //! serialization from an `Event` to JSON.
@@ -35,8 +36,8 @@ pub mod sede{
     ///             \"claim\":{\"id\":\"claim1\"}\
     ///          }\
     ///      }\
-    ///     ]";
-    /// println!("{:?}", deserialize_event(&json.to_string()));
+    ///     ]".to_string();
+    /// println!("{:?}", deserialize_event(&json));
     /// ```
     ///
     pub fn deserialize_event(x: &std::string::String) -> Result<Event> 
@@ -51,15 +52,15 @@ pub mod sede{
     /// use eddeserus::sede::*;
     /// let json = "\
     ///     [\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
-    ///      {\"domain\":\"Claim\",\
-    ///         \"patient_id\":\"xyz\",\
+    ///      {\"patient_id\":\"xyz\",\
     ///         \"time\":{\"begin\":0,\"end\":1},\
+    ///         \"domain\":\"Claim\",\
     ///         \"facts\":{\
     ///             \"claim\":{\"id\":\"claim1\"}\
     ///          }\
     ///      }\
-    ///     ]";
-    /// let event = deserialize_event(&json.to_string()).unwrap();
+    ///     ]".to_string();
+    /// let event = deserialize_event(&json).unwrap();
     /// assert_eq!(json, serialize_event(&event).unwrap());
     /// ```
     ///
