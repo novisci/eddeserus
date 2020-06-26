@@ -1,23 +1,80 @@
 
 use serde_json::value::RawValue;
-use serde::{Deserialize};
-
+use serde::{Deserialize, Serialize};
+use serde_tuple::*;
 /*----------------------------------------------------------------------------*/
 /// Shared types
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Interval {
     IntervalInt { begin : u64,    end : Option<u64> },
     IntervalStr { begin : String, end : Option<String> },
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum SubjectID<'a> {
     IDstr(&'a str),
     Idint(u64),
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub enum Location {
+    Unknown,
+    Inpatient,
+    Outpatient,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Code<'a> {
+    pub code : &'a str,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub codebook : Option<Codebook>
+}
+
+type Codebook = String;
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Claim<'a> {
+    pub id:  &'a str,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index:  Option<u32>,
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Cost<'a> {
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub charge: Option<&'a str>,
+
+    pub cost: &'a str,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transaction:  Option<&'a str>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Fill<'a> {
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub days_supply: Option<i32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub quantity: Option<i32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub strength:  Option<&'a str>,
+}
+
+
+/*----------------------------------------------------------------------------*/
+/// Shared types
 
 #[derive(Debug, Deserialize)]
 pub struct Event1<'a> {
@@ -26,7 +83,7 @@ pub struct Event1<'a> {
     end   : &'a RawValue,
     domain : &'a str,
     pub tags : Vec<&'a str>,
-    pub context    : Context1<'a>,
+    pub context : Context1<'a>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,17 +116,15 @@ pub struct Context2 {
 }
 
 
-#[derive(Debug, Deserialize)]
-pub struct Event3<'a> {
+#[derive(Debug, Deserialize, Serialize_tuple)]
+pub struct Event<'a> {
     pub p : SubjectID<'a>,
     pub b : &'a RawValue,
     pub e : &'a RawValue,
     pub d : &'a str,
     pub tags : Vec<&'a str>,
-    pub context : Context3<'a>,
+    pub context : Context<'a>,
 }
-
-
 
 
 #[cfg(test)]
@@ -78,146 +133,141 @@ mod test_event_experiment {
 
     #[test]
     fn test1() {
-        use serde_json::{from_str, Result};
+        use serde_json::{from_str, to_string, Result};
 
         let json = "[\
         \"xyz\",2,null,\"Demographics\",[],\
-        {\"domain\":\"Demographics\",\
+        {\
          \"patient_id\":\"abc\",\
          \"time\":{\"begin\":0,\"end\":1},\
+         \"domain\":\"Demographics\",\
          \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
          \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
          \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
         }]".to_string();
 
-        let evnt : Result<Event1> = from_str(&json);
-        println!("{:?}", &evnt);
-        // assert_eq!(json, to_string(&evnt.unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test2() {
-        use serde_json::{from_str, Result};
-
-        let json = "[\
-        \"xyz\",2,null,\"Demographics\",[],\
-        {\"domain\":\"Demographics\",\
-         \"patient_id\":\"abc\",\
-         \"time\":{\"begin\":0,\"end\":1},\
-         \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
-         \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
-         \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
-        }]".to_string();
-
-        let evnt : Result<Event2> = from_str(&json);
-        println!("{:?}", &evnt);
-        // assert_eq!(json, to_string(&evnt.unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test3() {
-        use serde_json::{from_str, Result};
-
-        let json = "[\
-        \"xyz\",2,null,\"Demographics\",[],\
-        {\"domain\":\"Demographics\",\
-         \"patient_id\":\"abc\",\
-         \"time\":{\"begin\":0,\"end\":1},\
-         \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
-         \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
-         \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
-        }]".to_string();
-
-        let evnt : Result<Event3> = from_str(&json);
-        println!("{:?}\n", &evnt);
-        // assert_eq!(json, to_string(&evnt.unwrap()).unwrap());
+        let evnt : Result<Event> = from_str(&json);
+        println!("Demographics event\n{:?}\n", &evnt);
+        assert_eq!(json, to_string(&evnt.unwrap()).unwrap());
     }
 }
 
 
 /*----------------------------------------------------------------------------*/
 // Contexts
-// #[derive(Deserialize, Debug)]
-// #[serde(tag = "domain")]
-// pub enum Context<'a> {
-//     #[serde(bound(deserialize = "ContextClaim<'a>: Deserialize<'de>"))]
-//     Claim(ContextClaim<'a>),
-//     #[serde(bound(deserialize = "ContextDemographics<'a>: Deserialize<'de>"))]
-//     Demographics(ContextDemographics<'a>),
-//     // Diagnosis(ContextDiagnosis),
-//     // Eligibility(ContextEligibilty),
-//     // Enrollment(ContextEnrollment),
-//     // Labs(ContextLabs),
-//     // Medication(ContextMedication),
-//     // Procedure(ContextProcedure),
-// }
 
-#[derive(Deserialize, Debug)]
-
-pub struct Context3<'a> {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Context<'a> {
     #[serde(bound(deserialize = "SubjectID<'a>: Deserialize<'de>"))]
     patient_id : SubjectID<'a>,
     time : Interval,
-    
-    #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
-    source: &'a RawValue,
 
-    #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
-    misc:   &'a RawValue,
-
+    #[serde(bound(deserialize = "Facts<'a>: Deserialize<'de>"))]
     #[serde(flatten)]
-    facts : Facts,
+    facts : Facts<'a>,
+
+    #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source: Option<&'a RawValue>,
+
+    #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    misc:   Option<&'a RawValue>,
 }
 
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "domain", content = "facts")]
-// #[serde(untagged)]
-pub enum Facts {
-    Claim(ClaimFacts),
+
+pub enum Facts<'a> {
+    #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>, Cost<'a>: Deserialize<'de>"))]
+    Claim(ClaimFacts<'a>),
+
     Demographics(DemographicFacts),
-    // Diagnosis(ContextDiagnosis),
-    // Eligibility(ContextEligibilty),
-    // Enrollment(ContextEnrollment),
-    // Labs(ContextLabs),
-    // Medication(ContextMedication),
-    // Procedure(ContextProcedure),
+
+    #[serde(bound(deserialize = "Code<'a>: Deserialize<'de>"))]
+    Diagnosis(DiagnosisFacts<'a>),
+    
+    Eligibility(EligibilityFacts),
+    Enrollment(EnrollmentFacts),
+
+    #[serde(bound(deserialize = 
+        "LabValue<'a>: Deserialize<'de>,
+         Code<'a>: Deserialize<'de>,
+         Claim<'a>: Deserialize<'de>"))]
+    Labs(LabsFacts<'a>),
+
+    #[serde(bound(deserialize = 
+        "Fill<'a>: Deserialize<'de>,
+         Code<'a>: Deserialize<'de>,
+         Claim<'a>: Deserialize<'de>"))]
+    Medication(MedicationFacts<'a>),
+    
+    #[serde(bound(deserialize = 
+         "Code<'a>: Deserialize<'de>,
+          Claim<'a>: Deserialize<'de>"))]
+    Procedure(ProcedureFacts<'a>),
 }
 
 
-#[derive(Debug, Deserialize)]
-pub struct ContextClaim<'a> {
-    field: &'a str,
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ClaimFacts<'a> {
+    #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>"))]
+    pub claim : Claim<'a>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location : Option<Location>,
+
+    #[serde(bound(deserialize = "Cost<'a>: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cost : Option<Cost<'a>>,
+
 }
 
-// #[derive(Debug, Deserialize)]
-// pub struct ContextDemographics<'a> {
-//     field: &'a str,
-// }
-#[derive(Debug, Deserialize)]
-pub struct ClaimFacts {
-    field: String,
+#[cfg(test)]
+mod test_claim_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+                    \"patient_id\":123,\
+                    \"time\":{\"begin\":0,\"end\":1},\
+                    \"domain\":\"Claim\",\
+                    \"facts\":{\
+                        \"claim\":{\"id\":\"claim1\"}\
+                      }\
+                    }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Claim context:\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+
+
+    #[test]
+    fn test2() {
+        let json = "{\
+                    \"patient_id\":123,\
+                    \"time\":{\"begin\":0,\"end\":1},\
+                    \"domain\":\"Claim\",\
+                    \"facts\":{\
+                        \"claim\":{\"id\":\"claim1\"},\
+                        \"cost\":{\"charge\":\"uiui\",\"cost\":\"99\"}\
+                      }\
+                    }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Claim context:\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
 }
+
 
 /*----------------------------------------------------------------------------*/
 // Demographics
 
-#[derive(Deserialize, Debug)]
-pub struct ContextDemographics<'a> {
-    pub patient_id : &'a str,
-    pub time :  Interval,
-    pub facts:  DemographicFacts,
-
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    //pub source: &'a RawValue,
-    pub source: serde_json::Value,
-
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub misc: &'a RawValue,
-    pub misc: serde_json::Value,
-}
-
-#[derive(PartialEq, Deserialize, Debug)]
+#[derive(PartialEq, Debug, Deserialize, Serialize)]
 pub enum DemographicField {
     BirthYear,
     BirthDate,
@@ -230,50 +280,265 @@ pub enum DemographicField {
     Ethnicity,
 }
 
-pub enum StringOrVecString {
-    SingleString(String),
-    VecString(Vec<String>),
-}
-
-#[derive(PartialEq, Deserialize, Debug)]
+#[derive(PartialEq, Debug, Deserialize, Serialize)]
 pub struct DemographicFacts {
     pub field:  DemographicField,
     pub info:   Option<serde_json::Value>,
 }
 
-// #[cfg(test)]
-// mod test_demographic_context {
-//     use serde_json::{from_str, Result};
-//     // use crate::types::Context;
-//     use crate::experiment::Context;
+#[cfg(test)]
+mod test_demographic_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
 
-//     #[test]
-//     fn test1() {
-//         use serde_json::{from_str, Result};
-//         let json = "{\"domain\":\"Demographics\",\
-//                     \"patient_id\":\"abc\",\
-//                     \"time\":{\"begin\":0,\"end\":1},\
-//                     \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
-//                     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
-//                      \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
-//                     }".to_string();
-//         let ctxt : Result<Context> = from_str(&json);
-//         println!("{:?}\n", &ctxt);
-//         // assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
-//     }
+    #[test]
+    fn test1() {
+        use serde_json::{from_str, Result};
+        let json = "{\
+                    \"patient_id\":\"abc\",\
+                    \"time\":{\"begin\":0,\"end\":1},\
+                    \"domain\":\"Demographics\",\
+                    \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
+                    \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
+                    \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
+                    }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Demographic context:\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
 
-//     #[test]
-//     fn test2() {
-//         let json = "{\"domain\":\"Demographics\",\
-//                     \"patient_id\":\"abc\",\
-//                     \"time\":{\"begin\":0,\"end\":1},\
-//                     \"facts\":{\"field\":\"RaceCodes\",\"info\":[\"some\",\"info\"]},\
-//                     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
-//                     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
-//                     }".to_string();
-//         let ctxt : Result<Context> = from_str(&json);
-//         println!("{:?}\n", &ctxt);
-//         // assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
-//     }
+    #[test]
+    fn test2() {
+        let json = "{\
+                    \"patient_id\":\"abc\",\
+                    \"time\":{\"begin\":0,\"end\":1},\
+                    \"domain\":\"Demographics\",\
+                    \"facts\":{\"field\":\"RaceCodes\",\"info\":[\"some\",\"info\"]},\
+                    \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
+                    \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
+                    }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Demographic context:\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
 
-// }
+/*----------------------------------------------------------------------------*/
+// Diagnosis
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DiagnosisFacts<'a> {
+    #[serde(bound(deserialize = "Code<'a>: Deserialize<'de>"))]
+    pub code    : Code<'a>,
+    
+    #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim   : Option<Claim<'a>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<Location>,
+}
+
+
+#[cfg(test)]
+mod test_diagnosis_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Diagnosis\",\
+            \"facts\":{\
+                \"code\":{\"code\":\"Z21\"},\
+                \"location\":\"Outpatient\"}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Diagnosis context\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+/*----------------------------------------------------------------------------*/
+// Eligibility
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct EligibilityFacts {}
+
+#[cfg(test)]
+mod test_eligibility_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Eligibility\",\
+            \"facts\":{}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Eligibility context\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
+// Enrollment
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct EnrollmentFacts {}
+
+#[cfg(test)]
+mod test_enrollment_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Enrollment\",\
+            \"facts\":{}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Enrollment context:\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
+// Labs
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LabValue<'a> {
+
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub text: Option<&'a str>,
+
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub number: Option<f64>,
+  
+  pub units: &'a str
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LabsFacts<'a> {
+
+    #[serde(bound(deserialize = "Code<'a>: Deserialize<'de>"))]
+    pub code    : Code<'a>,
+
+    #[serde(bound(deserialize = "LabValue<'a>: Deserialize<'de>"))]
+    pub value   : LabValue<'a>,
+
+    #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim   : Option<Claim<'a>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<Location>,
+}
+
+#[cfg(test)]
+mod test_labs_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Labs\",\
+            \"facts\":{\"code\":{\"code\":\"L21\"},\
+                       \"value\":{\"number\":0.1,\"units\":\"mg\"}}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Lab context\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+/*----------------------------------------------------------------------------*/
+// Medication
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct MedicationFacts<'a> {
+
+    #[serde(bound(deserialize = "Code<'a>: Deserialize<'de>"))]
+    pub code    : Code<'a>,
+
+    #[serde(bound(deserialize = "Fill<'a>: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fill: Option<Fill<'a>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<Location>,
+
+    #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim : Option<Claim<'a>>,
+}
+
+#[cfg(test)]
+mod test_medication_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Medication\",\
+            \"facts\":{\"code\":{\"code\":\"A21\"},\
+                       \"location\":\"Inpatient\"}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Medication context:\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
+// Procedure
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProcedureFacts<'a> {
+    #[serde(bound(deserialize = "Code<'a>: Deserialize<'de>"))]
+    pub code    : Code<'a>,
+
+    #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim   : Option<Claim<'a>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<Location>,
+}
+
+#[cfg(test)]
+mod test_procedure_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::experiment::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Procedure\",\
+            \"facts\":{\"code\":{\"code\":\"A21\"},\
+                       \"location\":\"Inpatient\"}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("{:?}", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}

@@ -1,137 +1,141 @@
+
 use eddeserus::experiment::*;
-use serde_json::{from_str, Result};
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, black_box};
-use std::fs::{File};
-use std::io::{Read};
+use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
 
-// use std::io::{BufReader};
+fn deserialize_orig(x: &String) -> () {
+    let stream = serde_json::Deserializer::from_str(&x)
+                 .into_iter::<eddeserus::types::Event>();
 
-pub fn event_experiments(c: &mut Criterion) {
+    for event in stream {
+        event.unwrap();
+    }
+}
 
-    let json = "[\"xyz\",2,null,\"Claim\",[],{\"patient_id\":\"xyz\",\"time\":{\"begin\":0}}]".to_string();
+fn deserialize_new(x: &String) -> () {
+    let stream = serde_json::Deserializer::from_str(&x)
+                 .into_iter::<Event>();
 
-    let mut group = c.benchmark_group("event experiments");
+    for event in stream {
+        event.unwrap();
+    }
+}
 
-    group.bench_with_input(
-        BenchmarkId::new("event1 experiment", "claim"), 
-        &json, 
-        |b, j| b.iter(|| {
-
-            let ev : Result<Event1> = from_str(black_box(&j));
-            ev
-        }));
-
-    group.bench_with_input(
-        BenchmarkId::new("event2 experiment", "claim"), 
-        &json, 
-        |b, j| b.iter(|| {
-            let ev : Result<Event2> = from_str(&j);
-            ev
-        }));
-
-
-    let mut f = File::open("benches/10demo_events.jsonl").unwrap(); 
-    let mut demo_json = String::new();
-    f.read_to_string(&mut demo_json).unwrap();
-
-    // let demo_json = read_to_string(File::open(filename).unwrap()).unwrap();
-    // let demo_json = "\.
-    // [\"xyz\",2,null,\"Claim\",[],\
-    // {\"domain\":\"Demographics\",\
-    //  \"patient_id\":\"abc\",\
-    //  \"time\":{\"begin\":0,\"end\":1},\
-    //  \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"}\
-    // }]".to_string();
-
-    group.bench_with_input(
-        BenchmarkId::new("event_orig experiment", "demographics"),
-         &demo_json, 
-        |b, j| b.iter(|| {
-
-            let stream = serde_json::Deserializer::from_str(j).into_iter::<eddeserus::types::Event>();
-
-            for event in stream {
-                event.unwrap();
-            }
-            // let ev : Result<eddeserus::types::Event> = from_str(&j);
-            // ev
-        }));
-
-    group.bench_with_input(
-        BenchmarkId::new("event1 experiment", "demographics"),
-         &demo_json, 
-        |b, j| b.iter(|| {
-            let stream = serde_json::Deserializer::from_str(j).into_iter::<Event1>();
-            for event in stream {
-                event.unwrap();
-            }
-            // let ev : Result<Event1> = from_str(&j);
-            // ev
-        }));
-
-    group.bench_with_input(
-        BenchmarkId::new("event2 experiment", "demographics"), 
-        &demo_json, 
-        |b, j| b.iter(|| {
-            let stream = serde_json::Deserializer::from_str(j).into_iter::<Event2>();
-            for event in stream {
-                // println!("{:?}", event);
-                event.unwrap();
-            }
-            // let ev : Result<Event2> = from_str(&j);
-            // ev
-        }));
-
-    group.bench_with_input(
-        BenchmarkId::new("event3 experiment", "demographics"),
-         &demo_json, 
-        |b, j| b.iter(|| {
-            let stream = serde_json::Deserializer::from_str(j).into_iter::<Event3>();
-            for event in stream {
-                // println!("{:?}", event);
-                event.unwrap();
-            }
-
-            // let ev : Result<Event3> = from_str(&j);
-            // ev
-        }));
-
-
-
+fn replicate_event(x: &String, n: u32) -> String {
+    let mut out = String::new();
+    for _i in 0..n {
+        out = format!("{}{}", &out, &x)
+    }
+    out
 }
 
 
-pub fn event_contexts(c: &mut Criterion) {
+fn deserialize_demographic_experiments(c: &mut Criterion) {
 
-    let demographics_json = "\
+    let mut group = c.benchmark_group("demographics_experiments");
+
+    let val = "[\
+    \"xyz\",2,null,\"Demographics\",[],\
     {\"domain\":\"Demographics\",\
      \"patient_id\":\"abc\",\
      \"time\":{\"begin\":0,\"end\":1},\
-     \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"}\
-    }".to_string();
+     \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
+     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
+     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}}\
+    ]\n".to_string();
 
-    let mut group = c.benchmark_group("context experiments");
+    for n in [4, 16, 256].iter() {
 
-    // group.bench_with_input(
-    //     BenchmarkId::new("context experiment", "Demographics"),
-    //     &demographics_json, 
-    //     |b, j| b.iter(|| {
+        let json = replicate_event(&val, *n);
 
-    //         let ev : Result<eddeserus::experiment::Context> = from_str(&j);
-    //         ev
-    //     }));
+        // Demographics
+        group.bench_with_input(
+            BenchmarkId::new("orig", format!("{} demographics", &n)),
+             &json,
+            |b, j| b.iter(|| deserialize_orig(j) ));
 
-    // group.bench_with_input(
-    //     BenchmarkId::new("context orginal", "Demographics"),
-    //     &demographics_json, 
-    //     |b, j| b.iter(|| {
+        group.bench_with_input(
+            BenchmarkId::new("new", format!("{} demographics", &n)),
+             &json,
+            |b, j| b.iter(|| deserialize_new(j) ));
 
-    //         let ev : Result<eddeserus::types::Context> = from_str(&j);
-    //         ev
-    //     }));
-
+    }
 
 }
 
-criterion_group!(benches, event_experiments, event_contexts);
+
+fn deserialize_diagnosis_experiments(c: &mut Criterion) {
+
+    let mut group = c.benchmark_group("diagnosis_experiments");
+
+    let val = "[\
+    \"abc\",2,null,\"Diagnosis\",[],\
+    {\"domain\":\"Diagnosis\",\
+     \"patient_id\":\"abc\",\
+     \"time\":{\"begin\":0,\"end\":1},\
+     \"facts\":{\"code\":{\"code\":\"99.01\",\"codebook\":\"ICD\"},\
+               \"location\":\"Inpatient\",\
+               \"claim\":{\"id\":\"98918\",\"index\":900}},\
+     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
+     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\",\"key3\":\"val3\",\
+               \"key4\":\"val4\",\"key5\":\"val5\",\"key5\":\"val5\"}}\
+    ]\n".to_string();
+
+
+    for n in [4, 16, 256].iter() {
+
+        let json = replicate_event(&val, *n);
+        // Diagnosis
+        group.bench_with_input(
+            BenchmarkId::new("orig", format!("{} diagnosis", &n)),
+             &json, 
+             |b, j| b.iter(|| deserialize_orig(j) ));
+
+        group.bench_with_input(
+            BenchmarkId::new("new", format!("{} diagnosis", &n)),
+             &json, 
+            |b, j| b.iter(|| deserialize_new(j) ));
+
+    }
+}
+
+
+
+fn deserialize_procedure_experiments(c: &mut Criterion) {
+
+    let mut group = c.benchmark_group("procedure_experiments");
+
+    let val = "[\
+    \"abc\",2,null,\"Procedure\",[],\
+    {\"domain\":\"Procedure\",\
+     \"patient_id\":\"abc\",\
+     \"time\":{\"begin\":0,\"end\":1},\
+     \"facts\":{\"code\":{\"code\":\"99.01\",\"codebook\":\"CPT\"},\
+               \"location\":\"Outpatient\"}}\
+    ]\n".to_string();
+
+
+    for n in [4, 16, 256].iter() {
+
+        let json = replicate_event(&val, *n);
+
+        // Procedure
+        group.bench_with_input(
+            BenchmarkId::new("orig", format!("{} procedure", &n)),
+             &json, 
+            |b, j| b.iter(|| deserialize_orig(j) ));
+
+
+        group.bench_with_input(
+            BenchmarkId::new("new", format!("{} procedure", &n)),
+             &json, 
+            |b, j| b.iter(|| deserialize_new(j) ));
+
+    }
+}
+
+
+criterion_group!(benches, 
+    deserialize_demographic_experiments, 
+    deserialize_diagnosis_experiments,
+    deserialize_procedure_experiments);
 criterion_main!(benches);
