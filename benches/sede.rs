@@ -1,119 +1,118 @@
 
 use eddeserus::types::*;
 use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
-use serde_json::{Result};
-use eddeserus::sede::*;
-// use std::fs::File;
-// use std::io::{Read};
-// use std::io::{BufReader, BufRead};
-// use serde_json::{Deserializer};
 
 
-pub fn single_event_deserialize(c: &mut Criterion) {
+fn deserialize(x: &String) -> () {
+    let stream = serde_json::Deserializer::from_str(&x)
+                 .into_iter::<Event>();
 
-    let json = "\
-        [\"xyz\",\"2010-01-01\",null,\"Claim\",[],\
-         {\"domain\":\"Claim\",\
-            \"patient_id\":\"xyz\",\
-            \"time\":{\"begin\":0,\"end\":1},\
-            \"facts\":{\
-                \"claim\":{\"id\":\"claim1\"}\
-             }\
-         }\
-        ]";
+    for event in stream {
+        event.unwrap();
+    }
+}
 
-    c.bench_with_input(BenchmarkId::new("single event", "claim"), &json, 
-        |b, j| b.iter(|| {
-            let ev : Result<Event> = deserialize_event(&j.to_string());
-            ev
-        }));
-
-    let json = "\
-         {\"domain\":\"Claim\",\
-            \"patient_id\":\"xyz\",\
-            \"time\":{\"begin\":0,\"end\":1},\
-            \"facts\":{\
-                \"claim\":{\"id\":\"claim1\"}\
-             }\
-         }";
-
-    c.bench_with_input(BenchmarkId::new("single context", "claim"), &json, 
-        |b, j| b.iter(|| {
-            let ev : Result<ContextClaim> = serde_json::from_str(&j.to_string());
-            ev
-        }));
+fn replicate_event(x: &String, n: u32) -> String {
+    let mut out = String::new();
+    for _i in 0..n {
+        out = format!("{}{}", &out, &x)
+    }
+    out
 }
 
 
-// pub fn criterion_benchmark(c: &mut Criterion) {
-//     c.bench_function("deserialize50_iter", {
-//         |b| {
+fn deserialize_demographics(c: &mut Criterion) {
+
+    let mut group = c.benchmark_group("demographics");
+
+    let val = "[\
+    \"xyz\",2,null,\"Demographics\",[],\
+    {\"domain\":\"Demographics\",\
+     \"patient_id\":\"abc\",\
+     \"time\":{\"begin\":0,\"end\":1},\
+     \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
+     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
+     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}}\
+    ]\n".to_string();
+
+    for n in [4, 16, 256].iter() {
+
+        let json = replicate_event(&val, *n);
+
+        // Demographics
+        group.bench_with_input(
+            BenchmarkId::new("de", format!("{} demographics", &n)),
+             &json,
+            |b, j| b.iter(|| deserialize(j) ));
 
 
-//           b.iter(|| {
-//             let mut file = File::open("resources/50events.json").unwrap();
-//             let mut contents = String::new();
-//             file.read_to_string(&mut contents).unwrap();
+    }
 
-//             let stream = Deserializer::from_str(&contents).into_iter::<Event>();
-//             for event in stream {
-//                 event.unwrap();
-//             }
-
-//           })
-//         } 
-//     });
-
-//     c.bench_function("sede50_iter", {
-//         |b| {
+}
 
 
-//           b.iter(|| {
-//             let mut file = File::open("resources/50events.json").unwrap();
-//             let mut contents = String::new();
-//             file.read_to_string(&mut contents).unwrap();
+fn deserialize_diagnosis(c: &mut Criterion) {
 
-//             let stream = Deserializer::from_str(&contents).into_iter::<Event>();
+    let mut group = c.benchmark_group("diagnosis");
 
-//             for event in stream {
-//                 serialize_event(&event.unwrap()).ok();
-//             }
+    let val = "[\
+    \"abc\",2,null,\"Diagnosis\",[],\
+    {\"domain\":\"Diagnosis\",\
+     \"patient_id\":\"abc\",\
+     \"time\":{\"begin\":0,\"end\":1},\
+     \"facts\":{\"code\":{\"code\":\"99.01\",\"codebook\":\"ICD\"},\
+               \"location\":\"Inpatient\",\
+               \"claim\":{\"id\":\"98918\",\"index\":900}},\
+     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
+     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\",\"key3\":\"val3\",\
+               \"key4\":\"val4\",\"key5\":\"val5\",\"key5\":\"val5\"}}\
+    ]\n".to_string();
 
-//           })
-//         } 
-//     });
 
-//     c.bench_function("deserialize50_buffer", {
-//         |b| {
+    for n in [4, 16, 256].iter() {
 
-//           b.iter(|| {
+        let json = replicate_event(&val, *n);
+        // Diagnosis
+        group.bench_with_input(
+            BenchmarkId::new("de", format!("{} diagnosis", &n)),
+             &json, 
+             |b, j| b.iter(|| deserialize(j) ));
 
-//             let file = File::open("resources/50events.json").unwrap();
-//             let data = Box::new(BufReader::new(file));
-//             for line in data.lines() {
-//                 deserialize_event(&line.unwrap()).ok();
-//             }
+    }
+}
 
-//           })
-//         } 
-//     });
 
-//     c.bench_function("sede50_buffer", {
-//         |b| {
 
-//           b.iter(|| {
+fn deserialize_procedure(c: &mut Criterion) {
 
-//             let file = File::open("resources/50events.json").unwrap();
-//             let data = Box::new(BufReader::new(file));
-//             for line in data.lines() {
-//                 let event = deserialize_event(&line.unwrap());
-//                 serialize_event(&event.unwrap()).ok();
-//             }
+    let mut group = c.benchmark_group("procedure");
 
-//           })
-//         } 
-//     });
-// }
+    let val = "[\
+    \"abc\",2,null,\"Procedure\",[],\
+    {\"domain\":\"Procedure\",\
+     \"patient_id\":\"abc\",\
+     \"time\":{\"begin\":0,\"end\":1},\
+     \"facts\":{\"code\":{\"code\":\"99.01\",\"codebook\":\"CPT\"},\
+               \"location\":\"Outpatient\"}}\
+    ]\n".to_string();
 
-criterion_group!(benches, single_event_deserialize);
+
+    for n in [4, 16, 256].iter() {
+
+        let json = replicate_event(&val, *n);
+
+        // Procedure
+        group.bench_with_input(
+            BenchmarkId::new("de", format!("{} procedure", &n)),
+             &json, 
+            |b, j| b.iter(|| deserialize(j) ));
+
+    }
+}
+
+
+criterion_group!(benches, 
+    deserialize_demographics, 
+    deserialize_diagnosis,
+    deserialize_procedure);
 criterion_main!(benches);
