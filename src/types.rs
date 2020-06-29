@@ -19,7 +19,7 @@ pub enum SubjectID<'a> {
     Idint(u64),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub enum Location {
     Unknown,
     Inpatient,
@@ -31,10 +31,10 @@ pub struct Code<'a> {
     pub code : &'a str,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub codebook : Option<Codebook>
+    pub codebook : Option<&'a str>
 }
 
-type Codebook = String;
+// type Codebook = String;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Claim<'a> {
@@ -82,7 +82,7 @@ pub struct Event<'a> {
     pub b : &'a RawValue,
     pub e : &'a RawValue,
     pub d : &'a str,
-    pub tags : Vec<&'a str>,
+    pub concepts : Vec<String>,
     pub context : Context<'a>,
 }
 
@@ -119,26 +119,25 @@ mod test_events {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Context<'a> {
     #[serde(bound(deserialize = "SubjectID<'a>: Deserialize<'de>"))]
-    patient_id : SubjectID<'a>,
-    time : Interval,
+    pub patient_id : SubjectID<'a>,
+    pub time : Interval,
 
     #[serde(bound(deserialize = "Facts<'a>: Deserialize<'de>"))]
     #[serde(flatten)]
-    facts : Facts<'a>,
+    pub facts : Facts<'a>,
 
     #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    source: Option<&'a RawValue>,
+    pub source: Option<&'a RawValue>,
 
     #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    misc:   Option<&'a RawValue>,
+    pub misc:   Option<&'a RawValue>,
 }
 
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "domain", content = "facts")]
-
 pub enum Facts<'a> {
     #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>, Cost<'a>: Deserialize<'de>"))]
     Claim(ClaimFacts<'a>),
