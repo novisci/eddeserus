@@ -3,6 +3,7 @@
 use serde_json::value::RawValue;
 use serde::{Deserialize, Serialize};
 use serde_tuple::*;
+
 /*----------------------------------------------------------------------------*/
 /// Shared types
 #[derive(Debug, Deserialize, Serialize)]
@@ -34,7 +35,9 @@ pub struct Code<'a> {
     pub codebook : Option<&'a str>
 }
 
-// type Codebook = String;
+// pub enum Codebook {
+// TODO: enumerate possible codebooks defined in EDM
+// }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Claim<'a> {
@@ -45,6 +48,9 @@ pub struct Claim<'a> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub index:  Option<u32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub procedure:  Option<String>,
 }
 
 
@@ -54,7 +60,10 @@ pub struct Cost<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub charge: Option<&'a str>,
 
-    pub cost: &'a str,
+    pub cost: &'a str, //TODO: EDM type is <Text | Double>
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed:  Option<&'a str>, //TODO: EDM type is Optional <Text | Double>
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction:  Option<&'a str>,
@@ -132,7 +141,7 @@ pub struct Context<'a> {
 
     #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub misc:   Option<&'a RawValue>,
+    pub misc: Option<&'a RawValue>,
 }
 
 
@@ -142,6 +151,7 @@ pub enum Facts<'a> {
     #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>, Cost<'a>: Deserialize<'de>"))]
     Claim(ClaimFacts<'a>),
 
+    Death(DeathFacts),
     Demographics(DemographicFacts),
 
     #[serde(bound(deserialize = "Code<'a>: Deserialize<'de>"))]
@@ -166,8 +176,10 @@ pub enum Facts<'a> {
          "Code<'a>: Deserialize<'de>,
           Claim<'a>: Deserialize<'de>"))]
     Procedure(ProcedureFacts<'a>),
-}
 
+    // NOTE: Undefined domain disallowed after final transformation to
+    //       events, thus this domain is not included. 
+}
 
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -224,6 +236,32 @@ mod test_claim_context {
 
 
 /*----------------------------------------------------------------------------*/
+// Death
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DeathFacts {}
+
+#[cfg(test)]
+mod test_death_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::types::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Death\",\
+            \"facts\":{}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("Death context\n{:?}\n", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
 // Demographics
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
@@ -235,8 +273,11 @@ pub enum DemographicField {
     Gender,
     Zipcode,
     County,
+    CountyFIPS,
     State,
     Ethnicity,
+    Region,
+    UrbanRural
 }
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
@@ -298,7 +339,6 @@ pub struct DiagnosisFacts<'a> {
     pub location: Option<Location>,
 }
 
-
 #[cfg(test)]
 mod test_diagnosis_context {
     use serde_json::{from_str, to_string, Result};
@@ -344,7 +384,6 @@ mod test_eligibility_context {
         assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
     }
 }
-
 
 /*----------------------------------------------------------------------------*/
 // Enrollment
