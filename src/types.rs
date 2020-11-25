@@ -177,7 +177,7 @@ mod test_events {
          \"patient_id\":\"abc\",\
          \"time\":{\"begin\":0,\"end\":1},\
          \"domain\":\"Demographics\",\
-         \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
+         \"facts\":{\"demo\":{\"field\":\"BirthYear\",\"info\":\"1980\"}},\
          \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
          \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
         }]".to_string();
@@ -349,6 +349,11 @@ pub enum DemographicField {
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
 pub struct DemographicFacts {
+    pub demo: DemographicInfo,
+}
+
+#[derive(PartialEq, Debug, Deserialize, Serialize)]
+pub struct DemographicInfo {
     pub field:  DemographicField,
     pub info:   Option<serde_json::Value>,
 }
@@ -365,7 +370,7 @@ mod test_demographic_context {
                     \"patient_id\":\"abc\",\
                     \"time\":{\"begin\":0,\"end\":1},\
                     \"domain\":\"Demographics\",\
-                    \"facts\":{\"field\":\"BirthYear\",\"info\":\"1980\"},\
+                    \"facts\":{\"demo\":{\"field\":\"BirthYear\",\"info\":\"1980\"}},\
                     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
                     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
                     }".to_string();
@@ -380,7 +385,7 @@ mod test_demographic_context {
                     \"patient_id\":\"abc\",\
                     \"time\":{\"begin\":0,\"end\":1},\
                     \"domain\":\"Demographics\",\
-                    \"facts\":{\"field\":\"RaceCodes\",\"info\":[\"some\",\"info\"]},\
+                    \"facts\":{\"demo\":{\"field\":\"RaceCodes\",\"info\":[\"some\",\"info\"]}},\
                     \"source\":{\"table\":\"somewhere\",\"db\":\"optum\"},\
                     \"misc\":{\"key1\":\"val1\",\"key2\":\"val2\"}\
                     }".to_string();
