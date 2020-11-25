@@ -36,8 +36,7 @@ pub struct Code<'a> {
     pub codebook : Option<Codebook>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-// #[serde(rename_all = "snake_case")]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Codebook {
     CDT,
     CPT,
