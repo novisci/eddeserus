@@ -32,12 +32,80 @@ pub struct Code<'a> {
     pub code : &'a str,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub codebook : Option<&'a str>
+    // pub codebook : Option<&'a str>
+    pub codebook : Option<Codebook>
 }
 
-// pub enum Codebook {
-// TODO: enumerate possible codebooks defined in EDM
-// }
+#[derive(Debug, Deserialize, Serialize)]
+// #[serde(rename_all = "snake_case")]
+pub enum Codebook {
+    CDT,
+    CPT,
+    HCPCS,
+    ICD9,
+    ICD9PC,
+    ICD10,
+    ICD10PC,
+    LOINC,
+    #[serde(rename(serialize = "medicaid_cat", deserialize = "medicaid_cat"))]
+    MedicaidCat,
+    NABSP,
+    NDC,
+    NDC9,
+    UB92,
+    #[serde(rename(serialize = "US_STATE", deserialize = "US_STATE"))]
+    USSTATE
+}
+
+#[cfg(test)]
+mod test_code {
+    use crate::types::*;
+
+    #[test]
+    fn test_medicaid_cat() {
+        use serde_json::{from_str, to_string, Result};
+
+        let json = "\
+        {\
+         \"code\":\"abc\",\
+         \"codebook\":\"medicaid_cat\"\
+        }".to_string();
+
+        let code : Result<Code> = from_str(&json);
+        println!("Code\n{:?}\n", &code);
+        assert_eq!(json, to_string(&code.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_us_state() {
+        use serde_json::{from_str, to_string, Result};
+
+        let json = "\
+        {\
+         \"code\":\"abc\",\
+         \"codebook\":\"US_STATE\"\
+        }".to_string();
+
+        let code : Result<Code> = from_str(&json);
+        println!("Code\n{:?}\n", &code);
+        assert_eq!(json, to_string(&code.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_icd10pc() {
+        use serde_json::{from_str, to_string, Result};
+
+        let json = "\
+        {\
+         \"code\":\"abc\",\
+         \"codebook\":\"ICD10PC\"\
+        }".to_string();
+
+        let code : Result<Code> = from_str(&json);
+        println!("Code\n{:?}\n", &code);
+        assert_eq!(json, to_string(&code.unwrap()).unwrap());
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Claim<'a> {
