@@ -114,7 +114,7 @@ pub struct Claim<'a> {
     pub r#type: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub index:  Option<u32>,
+    pub index:  Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub procedure:  Option<String>,
@@ -244,8 +244,8 @@ pub enum Facts<'a> {
           Claim<'a>: Deserialize<'de>"))]
     Procedure(ProcedureFacts<'a>),
 
-    // NOTE: Undefined domain disallowed after final transformation to
-    //       events, thus this domain is not included. 
+    Undefined(UndefinedFacts)
+
 }
 
 
@@ -606,6 +606,31 @@ mod test_procedure_context {
             \"domain\":\"Procedure\",\
             \"facts\":{\"code\":{\"code\":\"A21\"},\
                        \"location\":\"Inpatient\"}\
+            }".to_string();
+        let ctxt : Result<Context> = from_str(&json);
+        println!("{:?}", &ctxt);
+        assert_eq!(json, to_string(&ctxt.unwrap()).unwrap());
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
+// Undefined
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UndefinedFacts {}
+
+#[cfg(test)]
+mod test_undefined_context {
+    use serde_json::{from_str, to_string, Result};
+    use crate::types::Context;
+
+    #[test]
+    fn test1() {
+        let json = "{\
+            \"patient_id\":123,\
+            \"time\":{\"begin\":0,\"end\":1},\
+            \"domain\":\"Undefined\",\
+            \"facts\":{}\
             }".to_string();
         let ctxt : Result<Context> = from_str(&json);
         println!("{:?}", &ctxt);
