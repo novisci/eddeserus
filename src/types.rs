@@ -198,9 +198,9 @@ pub struct Context<'a> {
     pub patient_id : SubjectID<'a>,
     pub time : Interval,
 
-    #[serde(bound(deserialize = "Facts<'a>: Deserialize<'de>"))]
+    #[serde(bound(deserialize = "Domain<'a>: Deserialize<'de>"))]
     #[serde(flatten)]
-    pub facts : Facts<'a>,
+    pub facts : Domain<'a>,
 
     #[serde(bound(deserialize = "&'a RawValue: Deserialize<'de>"))]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -214,7 +214,7 @@ pub struct Context<'a> {
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "domain", content = "facts")]
-pub enum Facts<'a> {
+pub enum Domain<'a> {
     #[serde(bound(deserialize = "Claim<'a>: Deserialize<'de>, Cost<'a>: Deserialize<'de>"))]
     Claim(ClaimFacts<'a>),
 
