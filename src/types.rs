@@ -36,7 +36,7 @@ pub struct Code<'a> {
     pub codebook : Option<Codebook>
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
 pub enum Codebook {
     CDT,
     CPT,
